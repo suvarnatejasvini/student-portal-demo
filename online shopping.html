@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Online Shopping</title>
+  <style>
+    :root{
+      --brand:#0b5cff;
+      --muted:#6b7280;
+      --bg:#f7f8fb;
+      --card:#ffffff;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:#111}
+    header{background:linear-gradient(90deg,var(--brand),#4f46e5);color:white;padding:18px 24px;display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand h1{margin:0;font-size:20px}
+    .search{flex:1;margin:0 20px;max-width:540px}
+    .search input{width:100%;padding:10px 14px;border-radius:10px;border:0;outline:none}
+    .container{padding:22px;max-width:1100px;margin:0 auto}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:0 4px 14px rgba(16,24,40,0.06);display:flex;flex-direction:column}
+    .card img{width:100%;height:160px;object-fit:cover;border-radius:8px}
+    .card h3{margin:10px 0 6px;font-size:16px}
+    .price{font-weight:700}
+    .muted{color:var(--muted);font-size:13px}
+    .actions{margin-top:auto;display:flex;gap:8px}
+    .btn{padding:8px 10px;border-radius:8px;border:0;cursor:pointer}
+    .btn-primary{background:var(--brand);color:white}
+    .btn-ghost{background:transparent;border:1px solid #e6e9ef}
+    /* cart */
+    .cart{position:fixed;right:18px;top:80px;width:320px;background:var(--card);border-radius:12px;padding:14px;box-shadow:0 10px 30px rgba(2,6,23,0.12)}
+    .cart h4{margin:0 0 10px}
+    .cart-list{max-height:260px;overflow:auto}
+    .cart-item{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f1f5}
+    .cart-item img{width:56px;height:56px;object-fit:cover;border-radius:8px}
+    .cart-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    /* responsive */
+    @media (max-width:700px){
+      .cart{position:static;width:100%;margin-top:16px}
+      header{flex-wrap:wrap}
+      .search{order:3;width:100%;margin:12px 0 0}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="white" opacity="0.06"/><path d="M7 9h10l-1 7H8L7 9z" stroke="white" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h1>Online Shopping</h1>
+      <div class="muted" style="margin-left:8px;font-size:13px">Shop the best deals</div>
+    </div>
+
+    <div class="search">
+      <input id="search" placeholder="Search products, e.g. headphones, shoes..." />
+    </div>
+
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-ghost" id="view-cart-btn">View Cart (0)</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section style="display:flex;gap:14px;align-items:center;margin-bottom:14px">
+      <h2 style="margin:0">Featured Products</h2>
+      <p class="muted" style="margin:0">— curated picks for you</p>
+    </section>
+
+    <section>
+      <div id="product-grid" class="grid"></div>
+    </section>
+
+    <aside id="cart" class="cart" style="display:none">
+      <h4>Your Cart</h4>
+      <div class="cart-list" id="cart-list"></div>
+      <div class="cart-footer">
+        <div class="muted">Total:</div>
+        <div id="cart-total" style="font-weight:800">₹0</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" id="clear-cart">Clear</button>
+        <button class="btn btn-primary" id="checkout">Checkout</button>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // sample product data
+    const products = [
+      {id:1,name:'Wireless Headphones',price:2499,desc:'Comfort & long battery',img:'https://images.unsplash.com/photo-1518444028355-6a1a5b5aee6d?auto=format&fit=crop&w=800&q=60'},
+      {id:2,name:'Sneakers',price:3499,desc:'Stylish everyday sneakers',img:'https://images.unsplash.com/photo-1528701800489-476a4a3bbe0e?auto=format&fit=crop&w=800&q=60'},
+      {id:3,name:'Smart Watch',price:7999,desc:'Track fitness & notifications',img:'https://images.unsplash.com/photo-1519861530748-9f6a9f6c0a7c?auto=format&fit=crop&w=800&q=60'},
+      {id:4,name:'Backpack',price:1999,desc:'Durable travel backpack',img:'https://images.unsplash.com/photo-1593032465175-5b8b0a7a2f2e?auto=format&fit=crop&w=800&q=60'},
+      {id:5,name:'Sunglasses',price:1299,desc:'UV protection',img:'https://images.unsplash.com/photo-1534861062146-1fb6fd7f8e2b?auto=format&fit=crop&w=800&q=60'},
+      {id:6,name:'Bluetooth Speaker',price:2199,desc:'Loud and portable',img:'https://images.unsplash.com/photo-1497032205916-ac775f0649ae?auto=format&fit=crop&w=800&q=60'}
+    ];
+
+    const cart = new Map();
+
+    const grid = document.getElementById('product-grid');
+    const cartBtn = document.getElementById('view-cart-btn');
+    const cartEl = document.getElementById('cart');
+    const cartList = document.getElementById('cart-list');
+    const cartTotalEl = document.getElementById('cart-total');
+    const clearBtn = document.getElementById('clear-cart');
+    const checkoutBtn = document.getElementById('checkout');
+    const searchInput = document.getElementById('search');
+
+    function renderProducts(list){
+      grid.innerHTML = '';
+      list.forEach(p => {
+        const card = document.createElement('div'); card.className='card';
+        card.innerHTML = `
+          <img src="${p.img}" alt="${p.name}" />
+          <h3>${p.name}</h3>
+          <div class="muted">${p.desc}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+            <div>
+              <div class="price">₹${p.price}</div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-ghost" onclick="viewDetails(${p.id})">Details</button>
+              <button class="btn btn-primary" onclick="addToCart(${p.id})">Add</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function addToCart(id){
+      const p = products.find(x=>x.id===id);
+      if(!p) return;
+      const prev = cart.get(id) || {product:p,qty:0};
+      prev.qty += 1;
+      cart.set(id,prev);
+      updateCartUI();
+    }
+
+    function removeFromCart(id){
+      cart.delete(id);
+      updateCartUI();
+    }
+
+    function updateCartUI(){
+      const items = Array.from(cart.values());
+      cartBtn.textContent = `View Cart (${items.reduce((s,i)=>s+i.qty,0)})`;
+      cartList.innerHTML = '';
+      let total = 0;
+      items.forEach(it=>{
+        total += it.product.price * it.qty;
+        const div = document.createElement('div'); div.className='cart-item';
+        div.innerHTML = `
+          <img src="${it.product.img}" />
+          <div style="flex:1">
+            <div style="font-weight:700">${it.product.name}</div>
+            <div class="muted">₹${it.product.price} × ${it.qty}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn btn-ghost" onclick="decreaseQty(${it.product.id})">-</button>
+            <button class="btn btn-ghost" onclick="increaseQty(${it.product.id})">+</button>
+            <button class="btn" style="background:transparent;color:#ef4444" onclick="removeFromCart(${it.product.id})">Remove</button>
+          </div>
+        `;
+        cartList.appendChild(div);
+      });
+      cartTotalEl.textContent = `₹${total}`;
+      cartEl.style.display = items.length? 'block' : 'none';
+    }
+
+    function increaseQty(id){
+      const it = cart.get(id); if(!it) return; it.qty+=1; cart.set(id,it); updateCartUI();
+    }
+    function decreaseQty(id){
+      const it = cart.get(id); if(!it) return; it.qty -=1; if(it.qty<=0) cart.delete(id); else cart.set(id,it); updateCartUI();
+    }
+
+    function viewDetails(id){
+      const p = products.find(x=>x.id===id);
+      if(!p) return; alert(`${p.name}\n\n${p.desc}\nPrice: ₹${p.price}`);
+    }
+
+    cartBtn.addEventListener('click', ()=>{ cartEl.style.display = cartEl.style.display==='block'? 'none':'block' });
+    clearBtn.addEventListener('click', ()=>{ cart.clear(); updateCartUI(); });
+    checkoutBtn.addEventListener('click', ()=>{ if(cart.size===0) return alert('Cart is empty'); alert('Thank you! Checkout flow not implemented in demo.'); });
+
+    searchInput.addEventListener('input', (e)=>{
+      const q = e.target.value.trim().toLowerCase();
+      if(!q) renderProducts(products);
+      else renderProducts(products.filter(p=> p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)));
+    });
+
+    // initial render
+    renderProducts(products);
+  </script>
+</body>
+</html>
